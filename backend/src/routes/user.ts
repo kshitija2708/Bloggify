@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client/edge';
 import { withAccelerate } from '@prisma/extension-accelerate';
 import { sign, verify } from 'hono/jwt';
 
-import { signinInput, signupInput } from "@100xdevs/common-app"
+import { signinInput, signupInput } from 'input-variables-blog'
 export const userRouter=new Hono<{
     Bindings: {
       DATABASE_URL: string;
@@ -11,6 +11,7 @@ export const userRouter=new Hono<{
     };
     Variables: {
       userId: string;
+      postId:string
     };
   }>();
 // Signup Route
@@ -27,6 +28,7 @@ const {success}=signupInput.safeParse(body);
     const user = await prisma.user.create({
       data: {
         email: body.email,
+        name:body.name,
         password: body.password,
       },
     });
@@ -55,8 +57,8 @@ userRouter.post('/signin', async (c) => {
 		c.status(400);
 		return c.json({ error: "invalid input" });
 	}
-    const user = await prisma.user.findUnique({
-      where: {
+    const user = await prisma.user.findFirst({
+       where: {
         email: body.email,
         password:body.password
       },
@@ -67,7 +69,7 @@ userRouter.post('/signin', async (c) => {
     }
 
     const jwt = await sign({ id: user.id }, c.env.JWT_SECRET);
-    return c.json({ jwt });
+    return c.json({ "jwt":jwt });
   } catch (error) {
     console.error('Error during signin:', error);
     return c.json({ error: 'Signin failed' }, 500);

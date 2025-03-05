@@ -7,11 +7,13 @@
   },
   "dependencies": {
     "@100xdevs/common-app": "^1.0.3",
-    "@prisma/client": "^6.3.1",
+    "@prisma/client": "^6.4.1",
     "@prisma/extension-accelerate": "^1.2.2",
     "bloggifyrequired": "^1.0.1",
     "commonvars": "^1.0.0",
+    "cors": "^2.8.5",
     "hono": "^4.7.1",
+    "input-variables-blog": "^1.0.3",
     "jsonwebtoken": "^9.0.2",
     "prisma": "^6.3.1",
     "zod": "^3.24.2"

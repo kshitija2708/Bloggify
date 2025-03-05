@@ -1,9 +1,13 @@
 import { Hono } from 'hono';
 import { PrismaClient } from '@prisma/client/edge';
 import { withAccelerate } from '@prisma/extension-accelerate';
-import { sign, verify } from 'hono/jwt';
+// import { sign, verify } from 'hono/jwt';
 import { userRouter } from './routes/user';
 import { blogRouter } from './routes/posts';
+import { cors } from 'hono/cors';
+import likeRouter from './routes/likes';
+import commentRouter from './routes/comments';
+import { saveRouter } from './routes/savePost';
 
 const app = new Hono<{
   Bindings: {
@@ -12,12 +16,15 @@ const app = new Hono<{
   };
   Variables: {
     userId: string;
+    postId:string
   };
 }>();
 
 // Middleware for JWT Authentication
 
-
+app.use('/*',cors({
+   origin: 'http://localhost:5173'
+}))
 // Health Check Route
 app.get('/', (c) => {
   return c.text('Server is working');
@@ -37,7 +44,9 @@ app.get('/e', (c) => {
 app.route('/api/v1/user',userRouter)
 app.route('/api/v1/blog',blogRouter)
 
-
+app.route('/api/v1/likes',likeRouter)
+app.route('/api/v1/comments',commentRouter)
+app.route('/api/v1/savedposts',saveRouter)
   
 
 

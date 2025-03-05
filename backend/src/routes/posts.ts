@@ -12,6 +12,7 @@ Bindings: {
 
   Variables: {
     userId: string;
+    postId:string
 
   };
 
@@ -39,7 +40,36 @@ blogRouter.use('/*',async(c,next)=>{
         return c.json({ error: 'unauthorized' }, 401);
       }
     });
-
+    blogRouter.get('/bulk', async (c) => {
+      try {
+          const prisma = new PrismaClient({
+              datasourceUrl: c.env?.DATABASE_URL,
+          }).$extends(withAccelerate());
+    
+          // Fetch all blogs
+          const blogs = await prisma.post.findMany({
+              select: {
+                  id: true,
+                  title: true,
+                  content: true,
+                  author: {
+                      select: { name: true }
+                  }
+              }
+          });
+    
+          if (!blogs || blogs.length === 0) {
+              return c.json({ message: "No blogs found", blogs: [] });
+          }
+    
+          return c.json({ blogs: blogs || [] }); // Always return an array, never null
+    
+    
+      } catch (err) {
+          console.error("Error fetching blogs:", err);
+          return c.json({ message: "Error fetching blogs" }, 500);
+      }
+    });
 
 blogRouter.get('/:id', async(c) => {
     try {
@@ -47,17 +77,20 @@ blogRouter.get('/:id', async(c) => {
           datasourceUrl: c.env?.DATABASE_URL,
         }).$extends(withAccelerate());
       const id=c.req.param('id')
-        const body = await c.req.json();
-        const blog = await prisma.post.findFirst({
-            where:{
-                id:id
-            }
-         
-        });
-        return c.json({
-            blog,
-            message:"fetched first blog"
-        });
+        
+      const blog = await prisma.post.findFirst({
+        where: { id: id },
+        include: { 
+            author: { select: { name: true } } 
+        }
+    });
+    if (blog && blog.author && blog.author.name === null) {
+      blog.author.name = "Anonymous";  // Default name if null
+  }
+     
+        return c.json(
+            {blog}
+        );
     }
          catch(err){
             console.log(err);
@@ -99,32 +132,8 @@ blogRouter.get('/:id', async(c) => {
     
   });
  //add pagination 
-  blogRouter.get('/bulk', async(c) => {
-    try {
-        const prisma = new PrismaClient({
-          datasourceUrl: c.env?.DATABASE_URL,
-        }).$extends(withAccelerate());
-    
-        const body = await c.req.json();
-        const blog = await prisma.post.findMany({
-            where:{
-                id:body.id
-            }
-         
-        });
-        return c.json({
-            blog,
-            message:"fetched first blog"
-        });
-    }
-         catch(err){
-            console.log(err);
-            return c.json({
-                message:"not detected"
-            })}
-    
-   
-  });
+
+
 
   blogRouter.put('/:id', async(c) => {
     try {
